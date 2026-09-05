@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><title>VK Videos</title></head><body>
+<div id="VkVideosConfig" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+  <div data-role="content"><div class="content-primary">
+    <form id="VkVideosForm">
+      <h2>VK Videos</h2>
+      <p>Your VK playlists appear as folders under VK Videos. Videos stream through Jellyfin when you play them.</p>
+      <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="VkEnabled"><span>Enable VK Videos</span></label>
+      <div class="inputContainer"><label class="inputLabel" for="VkOwner">VK owner ID</label><input is="emby-input" id="VkOwner" required pattern="-?[0-9]+"><div class="fieldDescription">Use a negative ID for a community, or a positive ID for your personal account.</div></div>
+      <div class="inputContainer"><label class="inputLabel" for="VkToken">VK access token</label><input is="emby-input" id="VkToken" type="password" autocomplete="new-password" required><div class="fieldDescription">Use the account token that can read your video playlists. Saved in this server's plugin configuration.</div></div>
+      <div class="inputContainer"><label class="inputLabel" for="VkRefresh">Refresh while browsing (minutes)</label><input is="emby-input" id="VkRefresh" type="number" min="1" max="1440" required><div class="fieldDescription">A full refresh is also available under Dashboard → Scheduled Tasks → Refresh VK Videos.</div></div>
+      <div class="selectContainer"><label class="selectLabel" for="VkQuality">Preferred maximum quality</label><select is="emby-select" id="VkQuality"><option value="2160">2160p / 4K</option><option value="1440">1440p</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option><option value="240">240p</option></select><div class="fieldDescription">Uses the nearest available quality if VK has no stream at or below your preference.</div></div>
+      <label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" id="VkAll"><span>Include an All Videos folder</span></label>
+      <div class="inputContainer"><label class="inputLabel" for="VkUsers">Allowed Jellyfin user IDs</label><input is="emby-input" id="VkUsers"><div class="fieldDescription">Comma-separated user IDs. Leave empty to allow all users with channel access.</div></div>
+      <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+    </form>
+  </div></div>
+  <script>
+    (function () {
+      var pluginId = 'e4f461e0-710b-4b2d-b162-09cd1ed0a99e';
+      var page = document.querySelector('#VkVideosConfig');
+      function el(id) { return page.querySelector('#' + id); }
+      page.addEventListener('pageshow', function () {
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(pluginId).then(function (c) {
+          el('VkEnabled').checked = c.Enabled; el('VkOwner').value = c.OwnerId || '';
+          el('VkToken').value = c.AccessToken || ''; el('VkRefresh').value = c.RefreshMinutes;
+          el('VkQuality').value = c.MaximumHeight; el('VkAll').checked = c.ShowAllVideos;
+          el('VkUsers').value = (c.AllowedUserIds || []).join(', ');
+          Dashboard.hideLoadingMsg();
+        }).catch(function () { Dashboard.hideLoadingMsg(); Dashboard.alert('Could not load VK Videos settings.'); });
+      });
+      el('VkVideosForm').addEventListener('submit', function (event) {
+        event.preventDefault(); Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(pluginId).then(function (c) {
+          c.Enabled = el('VkEnabled').checked; c.OwnerId = Number(el('VkOwner').value.trim());
+          c.AccessToken = el('VkToken').value.trim(); c.RefreshMinutes = Number(el('VkRefresh').value);
+          c.MaximumHeight = Number(el('VkQuality').value); c.ShowAllVideos = el('VkAll').checked;
+          c.AllowedUserIds = el('VkUsers').value.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+          if (!Number.isSafeInteger(c.OwnerId) || c.OwnerId === 0) throw new Error('Enter a valid VK owner ID.');
+          if (c.AllowedUserIds.some(function (id) { return !/^(?:[a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i.test(id); })) throw new Error('Enter valid Jellyfin user IDs, separated by commas.');
+          return ApiClient.updatePluginConfiguration(pluginId, c);
+        }).then(Dashboard.processPluginConfigurationUpdateResult).catch(function (e) { Dashboard.hideLoadingMsg(); Dashboard.alert(e.message || 'Could not save VK Videos settings.'); });
+      });
+    })();
+  </script>
+</div>
+</body></html>

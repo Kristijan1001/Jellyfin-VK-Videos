@@ -1,0 +1,14 @@
+bin/
+obj/
+tools/dotnet/
+test-server/
+private/
+reference/
+dist/
+*.user
+__pycache__/
+
+VERIFICATION*
+tools/restart-test-server.ps1
+tools/verify-server.py
+tools/dotnet-install.ps1
