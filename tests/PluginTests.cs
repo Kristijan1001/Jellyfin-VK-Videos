@@ -233,28 +233,34 @@ public sealed class PluginTests
     }
 
     [Fact]
-    public void ChannelFilterReportsOnlyTheVkChannelAsAFoldersLibrary()
+    public void ChannelFilterReportsTheVkChannelAndItsPlaylistsAsFoldersLibraries()
     {
+        // Types as Jellyfin 10.11 actually sends them: the channel is "Channel", its folders "ChannelFolderItem".
         var vk = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "VK Videos", IsFolder = true };
         var single = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "VK Videos", IsFolder = true };
         var other = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "Other channel", IsFolder = true };
         var library = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.CollectionFolder, Name = "VK Videos",
             CollectionType = Jellyfin.Data.Enums.CollectionType.movies };
-        var playlist = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Folder, Name = "VK Videos", ChannelName = "VK Videos", IsFolder = true };
+        var playlist = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.ChannelFolderItem, Name = "Liked", ChannelName = "VK Videos", IsFolder = true };
+        var otherPlaylist = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.ChannelFolderItem, Name = "Liked", ChannelName = "Other channel", IsFolder = true };
+        var video = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Video, Name = "Clip", ChannelName = "VK Videos", IsFolder = false };
         var action = new Microsoft.AspNetCore.Mvc.ActionContext(new Microsoft.AspNetCore.Http.DefaultHttpContext(),
             new Microsoft.AspNetCore.Routing.RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
         var filter = new VkChannelCollectionTypeFilter();
         var views = new Microsoft.AspNetCore.Mvc.ObjectResult(new MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto>
-            { Items = [vk, other, library, playlist] });
+            { Items = [vk, other, library, playlist, otherPlaylist, video] });
         filter.OnResultExecuting(new Microsoft.AspNetCore.Mvc.Filters.ResultExecutingContext(action, [], views, new object()));
         filter.OnResultExecuting(new Microsoft.AspNetCore.Mvc.Filters.ResultExecutingContext(action, [],
             new Microsoft.AspNetCore.Mvc.ObjectResult(single), new object()));
         Assert.Equal(Jellyfin.Data.Enums.CollectionType.folders, vk.CollectionType);
         Assert.Equal(Jellyfin.Data.Enums.BaseItemKind.Channel, vk.Type);
         Assert.Equal(Jellyfin.Data.Enums.CollectionType.folders, single.CollectionType);
+        Assert.Equal(Jellyfin.Data.Enums.CollectionType.folders, playlist.CollectionType);
+        Assert.Equal(Jellyfin.Data.Enums.BaseItemKind.ChannelFolderItem, playlist.Type);
         Assert.Null(other.CollectionType);
+        Assert.Null(otherPlaylist.CollectionType);
+        Assert.Null(video.CollectionType);
         Assert.Equal(Jellyfin.Data.Enums.CollectionType.movies, library.CollectionType);
-        Assert.Null(playlist.CollectionType);
     }
 
     [Fact]

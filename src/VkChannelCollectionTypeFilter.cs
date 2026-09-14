@@ -7,9 +7,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace Jellyfin.Plugin.VkVideos;
 
 // Jellyfin lists a channel among the user's libraries as Type "Channel" with no CollectionType,
-// so clients that only open known library kinds draw the tile but cannot open it.
-// Report VK Videos as a "folders" library: it stays a Channel, and jellyfin-web opens a
-// folder-typed channel on the same list page as before.
+// and sends the channel's own folders as "ChannelFolderItem", so clients that only open known
+// library kinds draw those tiles but cannot open them. Report VK Videos and its playlists as
+// "folders" libraries: their types are unchanged, and jellyfin-web opens them on the same
+// list pages as before.
 public sealed class VkChannelCollectionTypeFilter : IResultFilter
 {
     public void OnResultExecuting(ResultExecutingContext context)
@@ -24,8 +25,10 @@ public sealed class VkChannelCollectionTypeFilter : IResultFilter
         };
         foreach (var dto in items)
         {
-            if (dto.Type == BaseItemKind.Channel && dto.Name == "VK Videos" && dto.CollectionType is null)
-                dto.CollectionType = CollectionType.folders;
+            if (dto.CollectionType is not null) continue;
+            bool channel = dto.Type == BaseItemKind.Channel && dto.Name == "VK Videos";
+            bool playlist = dto.Type == BaseItemKind.ChannelFolderItem && dto.ChannelName == "VK Videos";
+            if (channel || playlist) dto.CollectionType = CollectionType.folders;
         }
     }
 
