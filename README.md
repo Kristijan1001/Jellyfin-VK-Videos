@@ -17,7 +17,7 @@ Requires **Jellyfin 10.11.11**. Built with .NET 9.
 
 Use a negative owner ID for a community, or a positive ID for a personal account. The token must have access to that owner's video playlists.
 
-For manual installation, download [the latest release](https://github.com/Kristijan1001/Jellyfin-VK-Videos/releases/latest), extract the ZIP into a `VK Videos_1.0.1.0` folder inside Jellyfin's `plugins` directory, and restart Jellyfin.
+For manual installation, download [the latest release](https://github.com/Kristijan1001/Jellyfin-VK-Videos/releases/latest), extract the ZIP into a `VK Videos_1.0.2.0` folder inside Jellyfin's `plugins` directory, and restart Jellyfin.
 
 ## Features
 
@@ -56,6 +56,12 @@ dotnet test tests/VkVideos.Tests.csproj -c Release
 On Windows, `build.ps1` also creates the release ZIP in `dist/`. `Install.ps1 -DataDirectory 'YOUR JELLYFIN DATA DIRECTORY'` stages that build without restarting the server.
 
 The optional `tools/import-vk-settings.py` helper can import literal settings from an existing local VK uploader without executing it. Python is only needed for this helper.
+
+## Version 1.0.2
+
+The **VK Videos** tile now also opens in clients that only open known library types. The plugin reports it as a folder-style library; it is still a channel, and Jellyfin Web opens it on the same page as before. Jellyfin Web's home screen does not show a "Recently Added" row for folder-style libraries, so it no longer shows one for VK Videos.
+
+Validated with 19 automated tests and on a live Jellyfin 10.11.11 server.
 
 ## Version 1.0.1
 

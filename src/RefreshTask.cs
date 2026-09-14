@@ -16,6 +16,8 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
         services.AddSingleton<IChannel, VkChannel>();
         services.AddScoped<VkThumbnailAspectRatioFilter>();
         services.Configure<MvcOptions>(options => options.Filters.AddService<VkThumbnailAspectRatioFilter>());
+        services.AddScoped<VkChannelCollectionTypeFilter>();
+        services.Configure<MvcOptions>(options => options.Filters.AddService<VkChannelCollectionTypeFilter>());
     }
 }
 

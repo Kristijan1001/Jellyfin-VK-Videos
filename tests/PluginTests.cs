@@ -233,6 +233,31 @@ public sealed class PluginTests
     }
 
     [Fact]
+    public void ChannelFilterReportsOnlyTheVkChannelAsAFoldersLibrary()
+    {
+        var vk = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "VK Videos", IsFolder = true };
+        var single = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "VK Videos", IsFolder = true };
+        var other = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Channel, Name = "Other channel", IsFolder = true };
+        var library = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.CollectionFolder, Name = "VK Videos",
+            CollectionType = Jellyfin.Data.Enums.CollectionType.movies };
+        var playlist = new MediaBrowser.Model.Dto.BaseItemDto { Type = Jellyfin.Data.Enums.BaseItemKind.Folder, Name = "VK Videos", ChannelName = "VK Videos", IsFolder = true };
+        var action = new Microsoft.AspNetCore.Mvc.ActionContext(new Microsoft.AspNetCore.Http.DefaultHttpContext(),
+            new Microsoft.AspNetCore.Routing.RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
+        var filter = new VkChannelCollectionTypeFilter();
+        var views = new Microsoft.AspNetCore.Mvc.ObjectResult(new MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto>
+            { Items = [vk, other, library, playlist] });
+        filter.OnResultExecuting(new Microsoft.AspNetCore.Mvc.Filters.ResultExecutingContext(action, [], views, new object()));
+        filter.OnResultExecuting(new Microsoft.AspNetCore.Mvc.Filters.ResultExecutingContext(action, [],
+            new Microsoft.AspNetCore.Mvc.ObjectResult(single), new object()));
+        Assert.Equal(Jellyfin.Data.Enums.CollectionType.folders, vk.CollectionType);
+        Assert.Equal(Jellyfin.Data.Enums.BaseItemKind.Channel, vk.Type);
+        Assert.Equal(Jellyfin.Data.Enums.CollectionType.folders, single.CollectionType);
+        Assert.Null(other.CollectionType);
+        Assert.Equal(Jellyfin.Data.Enums.CollectionType.movies, library.CollectionType);
+        Assert.Null(playlist.CollectionType);
+    }
+
+    [Fact]
     public async Task ThumbnailLookupWithoutMetadataNeverMakesNetworkRequests()
     {
         using var fixture = new PluginFixture();
